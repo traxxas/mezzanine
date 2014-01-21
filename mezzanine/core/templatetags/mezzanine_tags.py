@@ -3,6 +3,7 @@ from future.builtins import int, open, str
 
 from hashlib import md5
 import os
+import re
 try:
     from urllib.parse import quote, unquote
 except ImportError:
@@ -25,6 +26,7 @@ from django.template.loader import get_template
 from django.utils import translation
 from django.utils.html import strip_tags
 from django.utils.text import capfirst
+from django.utils.safestring import mark_safe
 
 from mezzanine.conf import settings
 from mezzanine.core.fields import RichTextField
@@ -98,6 +100,27 @@ def initialize_nevercache():
 
 
 initialize_nevercache()
+
+class_re = re.compile(r'(?<=class=["\'])(.*?)(?=["\'])')
+@register.filter
+def add_class(value, css_class):
+    """
+    Add a css class while rendering form field.  Used to inject form-control
+    in form input fields for bootstrap3.0 full functionality.
+    """
+    string = unicode(value)
+    match = class_re.search(string)
+    if match:
+        m = re.search(r'^%s$|^%s\s|\s%s\s|\s%s$' % (css_class, css_class, 
+                                                    css_class, css_class), 
+                                                    match.group(1))
+        print match.group(1)
+        if not m:
+            return mark_safe(class_re.sub(match.group(1) + " " + css_class, 
+                                          string))
+    else:
+        return mark_safe(string.replace('>', ' class="%s">' % css_class, 1))
+    return value
 
 
 @register.simple_tag(takes_context=True)

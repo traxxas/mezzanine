@@ -12,7 +12,7 @@
 <div class="form-group input_{{ field.id_for_label }} {{ field.field.type }}
     {% if field.errors %} has-error{% endif %}">
     {% if field.label %}<label class="control-label" for="{{ field.auto_id }}">{{ field.label }}</label>{% endif %}
-    {{ field }}
+    {{ field|add_class:"form-control" }}
     {% if field.errors %}
     <p class="help-block">
         {% for e in field.errors %}
