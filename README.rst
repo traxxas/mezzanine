@@ -80,7 +80,7 @@ standard Django environment), with the following dependencies:
 * `grappelli-safe`_ - admin skin (`Grappelli`_ fork)
 * `filebrowser-safe`_ - for managing file uploads (`FileBrowser`_ fork)
 * `bleach`_ - for sanitizing markup in content
-* `pytz`_ - for timezone support
+* `pytz`_ and `tzlocal`_ - for timezone support
 * `South`_ - for database migrations (optional)
 * `django-compressor`_ - for merging JS/CSS assets (optional)
 * `requests`_ and `requests-oauth`_ - for interacting with external APIs
@@ -249,6 +249,8 @@ You can also add modules to the `Mezzanine Grid on djangopackages.com`_.
   permission to pages.
 * `django-widgy`_ - Widget-oriented content editing. Includes an adapter for
   Mezzanine and a powerful form builder.
+* `mezzanine-admin-backup`_ - Export your Mezzanine database and assets directly from the admin.
+* `mezzanine-mailchimp`_ - Integrate Mezzanine forms with a MailChimp subscription list.
 
 Donating
 ========
@@ -329,7 +331,6 @@ Sites Using Mezzanine
 * `Raymond Chandler <http://www.codearchaeologist.org>`_
 * `Nashsb <http://nashpp.com>`_
 * `AciBASE <http://acinetobacter.bham.ac.uk>`_
-* `Enrico Tröger <http://www.uvena.de>`_
 * `Matthe Wahn <http://www.matthewahn.com>`_
 * `Bit of Pixels <http://bitofpixels.com>`_
 * `European Crystallographic Meeting <http://ecm29.ecanews.org>`_
@@ -443,6 +444,25 @@ Sites Using Mezzanine
 * `Linktective The Link Checker <http://www.linktective.com>`_
 * `Zetalab <http://www.zetalab.de>`_
 * `Make-Up Artists & Hair Stylists Guild <http://www.local706.org>`_
+* `Anywhereism <http://www.anywhereism.net>`_
+* `Assistive Listening Device Locator <http://aldlocator.com>`_
+* `Frank & Connie Spitzer <http://sdhome4you.com>`_
+* `Coronado Unified School District <http://coronadousd.net>`_
+* `Coronado Inn <http://coronadoinn.com>`_
+* `Coronado Schools Foundation <http://csfkids.org>`_
+* `Light and Life Christian School <http://www.lightandlifechristianschool.com>`_
+* `The Morabito Group <http://themorabitogroup.com>`_
+* `Law Offices of Nancy Gardner <http://nancygardnerlaw.com>`_
+* `Soden & Steinberger APLC <http://legalmattersllp.com>`_
+* `Stalwart Communications <http://stalwartcom.com>`_
+* `Ubuntu Consultants <http://ubuntuconsultants.com>`_
+* `Wine a Bit Coronado <http://wineabitcoronado.com>`_
+* `Mercury Mastering <http://mercurymastering.com>`_
+* `Flowgrammable <http://flowgrammable.org>`_
+* `Shibe Mart <http://shibemart.com>`_
+* `Carlos Isaac Balderas <http://caisbalderas.com/>`_
+* `Enrico Tröger <http://www.pending.io>`_
+
 
 Quotes
 ======
@@ -486,6 +506,7 @@ Quotes
 .. _`pip`: http://www.pip-installer.org/
 .. _`bleach`: http://pypi.python.org/pypi/bleach
 .. _`pytz`: http://pypi.python.org/pypi/pytz/
+.. _`tzlocal`: http://pypi.python.org/pypi/tzlocal/
 .. _`django-compressor`: https://pypi.python.org/pypi/django_compressor
 .. _`Python Imaging Library`: http://www.pythonware.com/products/pil/
 .. _`grappelli-safe`: http://github.com/stephenmcd/grappelli-safe
@@ -507,7 +528,7 @@ Quotes
 .. _`test suite`: http://mezzanine.jupo.org/docs/packages.html#module-mezzanine.core.tests
 .. _`JVM`: http://en.wikipedia.org/wiki/Java_virtual_machine
 .. _`Jython`: http://www.jython.org/
-.. _`Twitter Bootstrap`: http://twitter.github.com/bootstrap/
+.. _`Twitter Bootstrap`: http://getbootstrap.com/
 .. _`Disqus`: http://disqus.com/
 .. _`Gravatar`: http://gravatar.com/
 .. _`Google Analytics`: http://www.google.com/analytics/
@@ -589,6 +610,8 @@ Quotes
 .. _`mezzanine-protected-pages`: https://github.com/evilchili/mezzanine-protected-pages
 .. _`mezzanine-page-auth`: https://github.com/simodalla/mezzanine_page_auth
 .. _`django-widgy`: http://django-widgy.readthedocs.org/en/latest/
+.. _`mezzanine-admin-backup`: https://bitbucket.org/joshcartme/mezzanine-admin-backup
+.. _`mezzanine-mailchimp`: https://bitbucket.org/naritasltda/mezzanine-mailchimp
 
 
 .. PEOPLE WITH QUOTES

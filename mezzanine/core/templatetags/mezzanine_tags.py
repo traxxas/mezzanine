@@ -16,12 +16,13 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.sites.models import Site
 from django.core.files import File
 from django.core.files.storage import default_storage
-from django.core.urlresolvers import reverse, NoReverseMatch
+from django.core.urlresolvers import reverse, resolve, NoReverseMatch
 from django.db.models import Model, get_model
 from django.template import (Context, Node, TextNode, Template,
     TemplateSyntaxError, TOKEN_TEXT, TOKEN_VAR, TOKEN_COMMENT, TOKEN_BLOCK)
 from django.template.defaultfilters import escape
 from django.template.loader import get_template
+from django.utils import translation
 from django.utils.html import strip_tags
 from django.utils.text import capfirst
 from django.utils.safestring import mark_safe
@@ -224,7 +225,7 @@ def set_short_url_for(context, token):
                 "access_token": context["settings"].BITLY_ACCESS_TOKEN,
                 "uri": obj.short_url,
             })
-            response = loads(urlopen(url).read())
+            response = loads(urlopen(url).read().decode("utf-8"))
             if response["status_code"] == 200:
                 obj.short_url = response["data"]["url"]
                 obj.save()
@@ -375,7 +376,7 @@ def thumbnail(image_url, width, height, quality=95, left=0.5, top=0.5):
         # Push a remote copy of the thumbnail if MEDIA_URL is
         # absolute.
         if "://" in settings.MEDIA_URL:
-            with open(thumb_path, "r") as f:
+            with open(thumb_path, "rb") as f:
                 default_storage.save(thumb_url, File(f))
     except Exception:
         # If an error occurred, a corrupted image may have been saved,
@@ -581,7 +582,7 @@ def admin_app_list(request):
         })
 
     app_list = list(app_dict.values())
-    sort = lambda x: x["name"] if x["index"] is None else x["index"]
+    sort = lambda x: (x["index"] if x["index"] is not None else 999, x["name"])
     for app in app_list:
         app["models"].sort(key=sort)
     app_list.sort(key=sort)
@@ -636,3 +637,30 @@ def dashboard_column(context, token):
         t = Template("{%% load %s %%}{%% %s %%}" % tuple(tag.split(".")))
         output.append(t.render(Context(context)))
     return "".join(output)
+
+
+@register.simple_tag(takes_context=True)
+def translate_url(context, language):
+    """
+    Translates the current URL for the given language code, eg:
+
+        {% translate_url de %}
+    """
+    try:
+        request = context["request"]
+    except KeyError:
+        return ""
+    view = resolve(request.path)
+    current_language = translation.get_language()
+    translation.activate(language)
+    try:
+        url_name = (view.url_name if not view.namespace
+                    else '%s:%s' % (view.namespace, view.url_name))
+        url = reverse(url_name, args=view.args, kwargs=view.kwargs)
+    except NoReverseMatch:
+        url_name = "admin:" + view.url_name
+        url = reverse(url_name, args=view.args, kwargs=view.kwargs)
+    translation.activate(current_language)
+    if context['request'].META["QUERY_STRING"]:
+        url += "?" + context['request'].META["QUERY_STRING"]
+    return url

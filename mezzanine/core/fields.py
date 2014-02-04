@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 from future.builtins import str
+from future.utils import with_metaclass
+
+from bleach import clean
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
@@ -9,7 +12,6 @@ from django.utils.text import capfirst
 from django.utils.translation import ugettext_lazy as _
 
 from mezzanine.utils.importing import import_dotted_path
-from future.utils import with_metaclass
 
 
 # Tags and attributes added to richtext filtering whitelist when the
@@ -41,6 +43,7 @@ class RichTextField(models.TextField):
                                          "settings.RICHTEXT_WIDGET_CLASS: %s"
                                          % settings.RICHTEXT_WIDGET_CLASS))
         kwargs["widget"] = widget_class()
+        kwargs.setdefault("required", False)
         formfield = super(RichTextField, self).formfield(**kwargs)
         return formfield
 
@@ -60,13 +63,8 @@ class RichTextField(models.TextField):
         if settings.RICHTEXT_FILTER_LEVEL == RICHTEXT_FILTER_LEVEL_LOW:
             tags += LOW_FILTER_TAGS
             attrs += LOW_FILTER_ATTRS
-        try:
-            from bleach import clean
-        except:
-            return value
-        else:
-            return clean(value, tags=tags, attributes=attrs, strip=True,
-                         strip_comments=False, styles=styles)
+        return clean(value, tags=tags, attributes=attrs, strip=True,
+                     strip_comments=False, styles=styles)
 
 
 class MultiChoiceField(with_metaclass(models.SubfieldBase, models.CharField)):
