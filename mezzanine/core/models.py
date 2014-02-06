@@ -400,7 +400,7 @@ class Orderable(with_metaclass(OrderableBase, models.Model)):
     models that aren't ordered with respect to a particular field.
     """
 
-    _order = models.PositiveIntegerField(_("Order"), null=True)
+    _order = models.IntegerField(_("Order"), null=True)
 
     class Meta:
         abstract = True
