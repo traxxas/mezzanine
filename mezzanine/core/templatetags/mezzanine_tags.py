@@ -132,6 +132,19 @@ def fields_for(context, form, template="includes/form_fields.html"):
     return get_template(template).render(context)
 
 
+@register.inclusion_tag("includes/bare_fields.html", takes_context=True)
+def bare_fields(context, form, cols=None, sr=False):
+    """
+    Renders fields without csrf for mulitple calls in the same form.
+    Adds putting fields inline with row and with column class ``cols``,
+    labels can be set to screen reader mode with ``sr`` == True.
+    """
+    context["form_for_fields"] = form
+    context["cols"] = cols
+    context["sr"] = sr
+    return context
+
+
 @register.inclusion_tag("includes/form_errors.html", takes_context=True)
 def errors_for(context, form):
     """
