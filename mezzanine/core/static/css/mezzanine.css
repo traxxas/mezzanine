@@ -78,6 +78,20 @@ footer .separator {
   opacity: 0.3;
   margin: 0 10px;
 }
+blockquote footer, blockquote small, blockquote .small {
+  display: block;
+  font-size: 80%;
+  line-height: 1.428571429;
+  color: #999;
+  background-color: white;
+  border-top: none;
+  margin-top: 0;
+  padding: 0;
+}
+blockquote footer:before, blockquote small:before, blockquote .small:before {
+  content: '\2014 \00A0';
+}
+
 .site-info {
   font-size: 90%;
   margin-top: 15px;
@@ -218,7 +232,7 @@ img.pull-left {
   Bootstrap. They are needed because we can not directly apply
   CSS classes to the form fields when rendering them in the template.
   They also cover special cases for date and date/time inputs.
-*/
+
 
 .form-group > input[type="text"],
 .form-group > input[type="password"],
@@ -362,6 +376,7 @@ img.pull-left {
   margin-bottom: 15px;
   border-radius: 5px;
 }
+
 /* We apply the clearfix hack to .form-actions because we often
 float the buttons inside it. This prevents collapsing. */
 .form-actions:before,
