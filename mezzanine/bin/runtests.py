@@ -4,8 +4,8 @@ import atexit
 import os
 import shutil
 import sys
-
 import django
+
 from django.core.management import call_command
 
 
@@ -62,6 +62,7 @@ PASSWORD_HASHERS = ('django.contrib.auth.hashers.MD5PasswordHasher',)
         atexit.register(cleanup_test_settings)
 
     django.setup()
+
 
     from django.core.management.commands import test
     if django.VERSION < (1, 10):
