@@ -126,6 +126,14 @@ def add_class(value, css_class):
     return value
 
 
+@register.filter
+def klass(obj):
+    """
+    Get the class name of an object, used to discover widget types
+    """
+    return obj.__class__.__name__
+
+
 @register.inclusion_tag("includes/form_fields.html", takes_context=True)
 def fields_for(context, form):
     """
