@@ -37,6 +37,13 @@ class OrderField(models.IntegerField):
         return super(OrderField, self).formfield(**kwargs)
 
 
+class OrderField(models.IntegerField):
+    def formfield(self, **kwargs):
+        kwargs.update({'widget': OrderWidget,
+                       'required': False})
+        return super(OrderField, self).formfield(**kwargs)
+
+
 class RichTextField(models.TextField):
     """
     TextField that stores HTML.
