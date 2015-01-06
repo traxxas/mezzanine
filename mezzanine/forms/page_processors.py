@@ -22,7 +22,7 @@ def format_value(value):
     return value
 
 
-@processor_for(Form)
+#@processor_for(Form)
 def form_processor(request, page):
     """
     Display a built form and handle submission.
