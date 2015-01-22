@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.contrib.auth import get_user_model
 from django.contrib.syndication.views import Feed
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
@@ -11,7 +12,7 @@ from mezzanine.blog.models import BlogPost, BlogCategory
 from mezzanine.generic.models import Keyword
 from mezzanine.pages.models import Page
 from mezzanine.conf import settings
-from mezzanine.utils.models import get_user_model
+from mezzanine.utils.html import absolute_urls
 
 
 User = get_user_model()
