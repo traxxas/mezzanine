@@ -211,7 +211,6 @@ class StackedDynamicInlineAdmin(BaseDynamicInlineAdmin,
         super(StackedDynamicInlineAdmin, self).__init__(*args, **kwargs)
 
 
-@renamed_get_queryset
 class OwnableAdmin(admin.ModelAdmin):
     """
     Admin class for models that subclass the abstract ``Ownable``
