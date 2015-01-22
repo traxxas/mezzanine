@@ -14,7 +14,6 @@ from mezzanine.conf import settings
 from mezzanine.core.forms import DynamicInlineAdminForm
 from mezzanine.core.models import (Orderable, SitePermission,
                                    CONTENT_STATUS_PUBLISHED)
-from mezzanine.utils.deprecation import renamed_get_queryset
 from mezzanine.utils.urls import admin_url
 
 
@@ -113,7 +112,6 @@ class StackedDynamicInlineAdmin(BaseDynamicInlineAdmin, admin.StackedInline):
         super(StackedDynamicInlineAdmin, self).__init__(*args, **kwargs)
 
 
-@renamed_get_queryset
 class OwnableAdmin(admin.ModelAdmin):
     """
     Admin class for models that subclass the abstract ``Ownable``
