@@ -2,6 +2,13 @@ from __future__ import unicode_literals
 from future.builtins import str
 from future.utils import with_metaclass
 
+from json import loads
+try:
+    from urllib.request import urlopen
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlopen, urlencode
+
 from django.contrib.contenttypes.generic import GenericForeignKey
 from django.db import models
 from django.db.models.base import ModelBase
@@ -252,6 +259,28 @@ class Displayable(Slugged, MetaData, TimeStamped):
         raise NotImplementedError("The model %s does not have "
                                   "get_absolute_url defined" % name)
 
+    def set_short_url(self):
+        """
+        Sets the ``short_url`` attribute using the bit.ly credentials
+        if they have been specified, and saves it. Used by the
+        ``set_short_url_for`` template tag, and ``TweetableAdmin``.
+        """
+        if not self.short_url:
+            from mezzanine.conf import settings
+            settings.use_editable()
+            parts = (self.site.domain, self.get_absolute_url())
+            self.short_url = "http://%s%s" % parts
+            if settings.BITLY_ACCESS_TOKEN:
+                url = "https://api-ssl.bit.ly/v3/shorten?%s" % urlencode({
+                    "access_token": settings.BITLY_ACCESS_TOKEN,
+                    "uri": self.short_url,
+                })
+                response = loads(urlopen(url).read().decode("utf-8"))
+                if response["status_code"] == 200:
+                    self.short_url = response["data"]["url"]
+            self.save()
+        return ""
+
     def _get_next_or_previous_by_publish_date(self, is_next, **kwargs):
         """
         Retrieves next or previous object by publish date. We implement
@@ -436,7 +465,7 @@ class SitePermission(models.Model):
     """
 
     user = models.ForeignKey(user_model_name, verbose_name=_("Author"),
-        related_name="%(class)ss")
+        related_name="%(class)ss", unique=True)
     sites = models.ManyToManyField("sites.Site", blank=True,
                                    verbose_name=_("Sites"))
 

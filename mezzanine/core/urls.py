@@ -8,13 +8,19 @@ from mezzanine.conf import settings
 urlpatterns = []
 
 if "django.contrib.admin" in settings.INSTALLED_APPS:
+    from django import VERSION
+    if VERSION < (1, 6):
+        reset_pattern = "^reset/(?P<uidb36>[-\w]+)/(?P<token>[-\w]+)/$"
+    else:
+        reset_pattern = "^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$"
     urlpatterns += patterns("django.contrib.auth.views",
         url("^password_reset/$", "password_reset", name="password_reset"),
         url("^password_reset/done/$", "password_reset_done",
             name="password_reset_done"),
-        ("^reset/(?P<uidb36>[-\w]+)/(?P<token>[-\w]+)/$",
-            "password_reset_confirm"),
-        ("^reset/done/$", "password_reset_complete"),
+        url("^reset/done/$", "password_reset_complete",
+            name="password_reset_complete"),
+        url(reset_pattern, "password_reset_confirm",
+            name="password_reset_confirm"),
     )
 
 urlpatterns += patterns("mezzanine.core.views",

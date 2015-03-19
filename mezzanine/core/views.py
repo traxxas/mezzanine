@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 from future.builtins import int, open
 
 import os
+from mezzanine.utils.models import get_model
+
 try:
     from urllib.parse import urljoin, urlparse
 except ImportError:
@@ -13,7 +15,6 @@ from django.contrib.admin.options import ModelAdmin
 from django.contrib.staticfiles import finders
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db.models import get_model
 from django.http import (HttpResponse, HttpResponseServerError,
                          HttpResponseNotFound)
 from django.shortcuts import redirect
@@ -116,7 +117,7 @@ def search(request, template="search_results.html"):
         search_model = get_model(*request.GET.get("type", "").split(".", 1))
         if not issubclass(search_model, Displayable):
             raise TypeError
-    except TypeError:
+    except (ValueError, TypeError, LookupError):
         search_model = Displayable
         search_type = _("Everything")
     else:
@@ -146,7 +147,7 @@ def static_proxy(request):
         if url.startswith(prefix):
             url = url.replace(prefix, "", 1)
     response = ""
-    mimetype = ""
+    content_type = ""
     path = finders.find(url)
     if path:
         if isinstance(path, (list, tuple)):
@@ -159,14 +160,14 @@ def static_proxy(request):
             if not urlparse(static_url).scheme:
                 static_url = urljoin(host, static_url)
             base_tag = "<base href='%s'>" % static_url
-            mimetype = "text/html"
+            content_type = "text/html"
             with open(path, "r") as f:
                 response = f.read().replace("<head>", "<head>" + base_tag)
         else:
-            mimetype = "application/octet-stream"
+            content_type = "application/octet-stream"
             with open(path, "rb") as f:
                 response = f.read()
-    return HttpResponse(response, mimetype=mimetype)
+    return HttpResponse(response, content_type=content_type)
 
 
 def displayable_links_js(request, template_name="admin/displayable_links.js"):
@@ -193,7 +194,8 @@ def displayable_links_js(request, template_name="admin/displayable_links.js"):
             title = "%s: %s" % (verbose_name, title)
         links.append((not page and real, url, title))
     context = {"links": [link[1:] for link in sorted(links)]}
-    return render(request, template_name, context, mimetype="text/javascript")
+    content_type = "text/javascript"
+    return render(request, template_name, context, content_type=content_type)
 
 
 @requires_csrf_token

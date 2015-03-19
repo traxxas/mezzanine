@@ -5,8 +5,8 @@ from functools import reduce
 from operator import ior, iand
 from string import punctuation
 
-from django.db.models import (Manager, Q, CharField, TextField,
-                              get_models, get_model)
+from django.core.exceptions import ImproperlyConfigured
+from django.db.models import Manager, Q, CharField, TextField, get_models
 from django.db.models.manager import ManagerDescriptor
 from django.db.models.query import QuerySet
 from django.contrib.sites.managers import CurrentSiteManager as DjangoCSM
@@ -14,6 +14,7 @@ from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
 from mezzanine.conf import settings
+from mezzanine.utils.models import get_model
 from mezzanine.utils.sites import current_site_id
 from mezzanine.utils.urls import home_slug
 
@@ -138,7 +139,7 @@ class SearchableQuerySet(QuerySet):
         # terms that are explicitly required.
         elif optional:
             queryset = queryset.filter(reduce(ior, optional))
-        return queryset
+        return queryset.distinct()
 
     def _clone(self, *args, **kwargs):
         """
@@ -161,17 +162,30 @@ class SearchableQuerySet(QuerySet):
         If search has occurred and no ordering has occurred, decorate
         each result with the number of search terms so that it can be
         sorted by the number of occurrence of terms.
+
+        In the case of search fields that span model relationships, we
+        cannot accurately match occurrences without some very
+        complicated traversal code, which we won't attempt. So in this
+        case, namely when there are no matches for a result (count=0),
+        and search fields contain relationships (double underscores),
+        we assume one match for one of the fields, and use the average
+        weight of all search fields with relationships.
         """
         results = super(SearchableQuerySet, self).iterator()
         if self._search_terms and not self._search_ordered:
             results = list(results)
             for i, result in enumerate(results):
                 count = 0
+                related_weights = []
                 for (field, weight) in self._search_fields.items():
+                    if "__" in field:
+                        related_weights.append(weight)
                     for term in self._search_terms:
-                        field_value = getattr(result, field)
+                        field_value = getattr(result, field, None)
                         if field_value:
                             count += field_value.lower().count(term) * weight
+                if not count and related_weights:
+                    count = int(sum(related_weights) / len(related_weights))
                 results[i].result_count = count
             return iter(results)
         return results
@@ -258,10 +272,22 @@ class SearchableManager(Manager):
             # as ``Page``, so we check the parent class list of each
             # model when determining whether a model falls within the
             # ``SEARCH_MODEL_CHOICES`` setting.
-            search_choices = set([get_model(*name.split(".", 1)) for name in
-                                  settings.SEARCH_MODEL_CHOICES])
+            search_choices = set()
             models = set()
             parents = set()
+            errors = []
+            for name in settings.SEARCH_MODEL_CHOICES:
+                try:
+                    model = get_model(*name.split(".", 1))
+                except LookupError:
+                    errors.append(name)
+                else:
+                    search_choices.add(model)
+            if errors:
+                raise ImproperlyConfigured("Could not load the model(s) "
+                        "%s defined in the 'SEARCH_MODEL_CHOICES' setting."
+                        % ", ".join(errors))
+
             for model in get_models():
                 # Model is actually a subclasses of what we're
                 # searching (eg Displayabale)
@@ -306,6 +332,7 @@ class CurrentSiteManager(DjangoCSM):
     management commands with the ``--site`` arg, finally falling back
     to ``settings.SITE_ID`` if none of those match a site.
     """
+
     def __init__(self, field_name=None, *args, **kwargs):
         super(DjangoCSM, self).__init__(*args, **kwargs)
         self.__field_name = field_name
@@ -313,7 +340,12 @@ class CurrentSiteManager(DjangoCSM):
 
     def get_query_set(self):
         if not self.__is_validated:
-            self._validate_field_name()
+            try:
+                # Django <= 1.6
+                self._validate_field_name()
+            except AttributeError:
+                # Django >= 1.7: will populate "self.__field_name".
+                self._get_field_name()
         lookup = {self.__field_name + "__id__exact": current_site_id()}
         return super(DjangoCSM, self).get_query_set().filter(**lookup)
 

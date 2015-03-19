@@ -7,7 +7,6 @@ from django import forms
 from django.forms.extras.widgets import SelectDateWidget
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django.contrib.staticfiles.storage import staticfiles_storage
 
 from mezzanine.conf import settings
 from mezzanine.core.models import Orderable
@@ -39,8 +38,8 @@ class Html5Mixin(object):
 
 _tinymce_js = ()
 if settings.GRAPPELLI_INSTALLED:
-    _path = "grappelli/tinymce/jscripts/tiny_mce/tiny_mce.js"
-    _tinymce_js = (staticfiles_storage.url(_path), settings.TINYMCE_SETUP_JS)
+    _tinymce_js = ("grappelli/tinymce/jscripts/tiny_mce/tiny_mce.js",
+                   settings.TINYMCE_SETUP_JS)
 
 
 class TinyMceWidget(forms.Textarea):
@@ -140,11 +139,11 @@ def get_edit_form(obj, field_names, data=None, files=None):
             for f in self.fields.keys():
                 field_class = self.fields[f].__class__
                 try:
-                    field_type = widget_overrides[field_class]
+                    widget = fields.WIDGETS[widget_overrides[field_class]]
                 except KeyError:
                     pass
                 else:
-                    self.fields[f].widget = fields.WIDGETS[field_type]()
+                    self.fields[f].widget = widget()
                 css_class = self.fields[f].widget.attrs.get("class", "")
                 css_class += " " + field_class.__name__.lower()
                 self.fields[f].widget.attrs["class"] = css_class

@@ -5,6 +5,7 @@ from future.utils import with_metaclass
 from bleach import clean
 
 from django.conf import settings
+from django.contrib.admin.widgets import AdminTextareaWidget
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import models
 from django.forms import MultipleChoiceField
@@ -35,14 +36,17 @@ class RichTextField(models.TextField):
         Apply the widget class defined by the
         ``RICHTEXT_WIDGET_CLASS`` setting.
         """
-        from mezzanine.conf import settings
-        try:
-            widget_class = import_dotted_path(settings.RICHTEXT_WIDGET_CLASS)
-        except ImportError:
-            raise ImproperlyConfigured(_("Could not import the value of "
-                                         "settings.RICHTEXT_WIDGET_CLASS: %s"
-                                         % settings.RICHTEXT_WIDGET_CLASS))
-        kwargs["widget"] = widget_class()
+        default = kwargs.get("widget", None) or AdminTextareaWidget
+        if default is AdminTextareaWidget:
+            from mezzanine.conf import settings
+            richtext_widget_path = settings.RICHTEXT_WIDGET_CLASS
+            try:
+                widget_class = import_dotted_path(richtext_widget_path)
+            except ImportError:
+                raise ImproperlyConfigured(_("Could not import the value of "
+                                             "settings.RICHTEXT_WIDGET_CLASS: "
+                                             "%s" % richtext_widget_path))
+            kwargs["widget"] = widget_class()
         kwargs.setdefault("required", False)
         formfield = super(RichTextField, self).formfield(**kwargs)
         return formfield

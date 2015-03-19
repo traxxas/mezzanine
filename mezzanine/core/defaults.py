@@ -30,6 +30,14 @@ register_setting(
 )
 
 register_setting(
+    name="ADMIN_MENU_COLLAPSED",
+    description=_("Controls whether or not the left-hand admin menu is "
+                  "collpased by default."),
+    editable=True,
+    default=False,
+)
+
+register_setting(
     name="ADMIN_REMOVAL",
     description=_("Unregister these models from the admin."),
     editable=False,
@@ -247,15 +255,16 @@ register_setting(
     description=_("List of HTML tags that won't be stripped from "
         "``RichTextField`` instances."),
     editable=False,
-    default=("a", "abbr", "acronym", "address", "area", "b", "bdo", "big",
-        "blockquote", "br", "button", "caption", "center", "cite", "code",
-        "col", "colgroup", "dd", "del", "dfn", "dir", "div", "dl", "dt",
-        "em", "fieldset", "font", "footer", "form", "h1", "h2", "h3", "h4", "h5",
-        "h6", "hr", "i", "img", "input", "ins", "kbd", "label", "legend",
-        "li", "map", "menu", "ol", "optgroup", "option", "p", "pre", "q",
-        "s", "samp", "select", "small", "span", "strike", "strong", "sub",
-        "sup", "table", "tbody", "td", "textarea", "tfoot", "th", "thead",
-        "tr", "tt", "u", "ul", "var", "wbr"),
+    default=("a", "abbr", "acronym", "address", "area", "article", "aside",
+        "b", "bdo", "big", "blockquote", "br", "button", "caption", "center",
+        "cite", "code", "col", "colgroup", "dd", "del", "dfn", "dir", "div",
+        "dl", "dt", "em", "fieldset", "figure", "font", "footer", "form",
+        "h1", "h2", "h3", "h4", "h5", "h6", "header", "hr", "i", "img",
+        "input", "ins", "kbd", "label", "legend", "li", "map", "menu",
+        "nav", "ol", "optgroup", "option", "p", "pre", "q", "s", "samp",
+        "section", "select", "small", "span", "strike", "strong",
+        "sub", "sup", "table", "tbody", "td", "textarea",
+        "tfoot", "th", "thead", "tr", "tt", "u", "ul", "var", "wbr"),
 )
 
 register_setting(
@@ -290,7 +299,7 @@ register_setting(
     description=_("List of dotted paths to functions, called in order, on a "
         "``RichTextField`` value before it is rendered to the template."),
     editable=False,
-    default=(),
+    default=("mezzanine.utils.html.thumbnails",),
 )
 
 RICHTEXT_FILTER_LEVEL_HIGH = 1
@@ -506,12 +515,13 @@ register_setting(
     editable=False,
     default=(
         "ACCOUNTS_APPROVAL_REQUIRED", "ACCOUNTS_VERIFICATION_REQUIRED",
+        "ADMIN_MENU_COLLAPSED",
         "BITLY_ACCESS_TOKEN", "BLOG_USE_FEATURED_IMAGE",
         "COMMENTS_DISQUS_SHORTNAME", "COMMENTS_NUM_LATEST",
         "COMMENTS_DISQUS_API_PUBLIC_KEY", "COMMENTS_DISQUS_API_SECRET_KEY",
         "COMMENTS_USE_RATINGS", "DEV_SERVER", "FORMS_USE_HTML5",
         "GRAPPELLI_INSTALLED", "GOOGLE_ANALYTICS_ID", "JQUERY_FILENAME",
-        "LOGIN_URL", "LOGOUT_URL", "SITE_TITLE", "SITE_TAGLINE",
+        "LOGIN_URL", "LOGOUT_URL", "SITE_TITLE", "SITE_TAGLINE", "USE_L10N",
     ),
 )
 
