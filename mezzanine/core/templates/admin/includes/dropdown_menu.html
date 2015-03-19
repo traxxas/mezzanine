@@ -1,7 +1,7 @@
 {% load i18n future mezzanine_tags %}
-<div class="dropdown-menu" style="display:none;">
+<div id="side-panel">
+<div class="dropdown-menu">
 <ul>
-    <li><a href="{% url "admin:index" %}">{% trans "Dashboard" %}</a></li>
     {% for app in dropdown_menu_app_list %}
     <li>
         <a href="#">{% trans app.name %}</a>
@@ -16,7 +16,8 @@
     </li>
     {% endfor %}
 </ul>
-{% if LANGUAGES|length > 1 %}
+
+{% if settings.USE_L10N and LANGUAGES|length > 1 %}
 {% get_language_info_list for LANGUAGES as languages %}
 <form>
     <select id="id_language" onchange="window.location.href=this.value;">
@@ -26,6 +27,7 @@
     </select>
 </form>
 {% endif %}
+
 {% if dropdown_menu_sites and dropdown_menu_sites|length > 1 %}
 <form action="{% url "set_site" %}">
 <input type="hidden" name="next" value="{{ request.path }}">
@@ -38,4 +40,6 @@
 </select>
 </form>
 {% endif %}
+</div>
+<div id="side-panel-toggle"></div>
 </div>

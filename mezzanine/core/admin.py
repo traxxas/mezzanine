@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
+from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
-from django.db.models import AutoField
 from django.forms import ValidationError, ModelForm
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
@@ -14,7 +14,35 @@ from mezzanine.core.forms import DynamicInlineAdminForm
 from mezzanine.core.models import (Orderable, SitePermission,
                                    CONTENT_STATUS_PUBLISHED)
 from mezzanine.utils.urls import admin_url
-from mezzanine.utils.models import get_user_model
+
+if settings.USE_MODELTRANSLATION:
+    from django.utils.datastructures import SortedDict
+    from django.utils.translation import activate, get_language
+    from modeltranslation.admin import (TranslationAdmin,
+                                        TranslationInlineModelAdmin)
+
+    class BaseTranslationModelAdmin(TranslationAdmin):
+        """Mimic modeltranslation's TabbedTranslationAdmin but uses a
+        custom tabbed_translation_fields.js
+        """
+        class Media:
+            js = (
+                'modeltranslation/js/force_jquery.js',
+                '//ajax.googleapis.com/ajax/libs/jqueryui'
+                        '/1.8.2/jquery-ui.min.js',
+                'mezzanine/js/admin/tabbed_translation_fields.js',
+            )
+            css = {
+                'all': ('mezzanine/css/admin/tabbed_translation_fields.css',),
+            }
+
+else:
+    class BaseTranslationModelAdmin(admin.ModelAdmin):
+        """
+        Abstract class used to handle the switch between translation
+        and no-translation class logic.
+        """
+        pass
 
 
 User = get_user_model()
@@ -31,7 +59,7 @@ class DisplayableAdminForm(ModelForm):
         return content
 
 
-class DisplayableAdmin(admin.ModelAdmin):
+class DisplayableAdmin(BaseTranslationModelAdmin):
     """
     Admin class for subclasses of the abstract ``Displayable`` model.
     """
@@ -58,12 +86,29 @@ class DisplayableAdmin(admin.ModelAdmin):
 
     def __init__(self, *args, **kwargs):
         super(DisplayableAdmin, self).__init__(*args, **kwargs)
-        # TODO: check if the list() call is necessary below on Python 3:
         try:
-            self.search_fields = list(
-                               self.model.objects.get_search_fields().keys())
+            self.search_fields = list(set(list(self.search_fields) + list(
+                               self.model.objects.get_search_fields().keys())))
         except AttributeError:
             pass
+
+    def save_model(self, request, obj, form, change):
+        """
+        Save model for every language so that field auto-population
+        is done for every each of it.
+        """
+        super(DisplayableAdmin, self).save_model(request, obj, form, change)
+        if settings.USE_MODELTRANSLATION:
+            lang = get_language()
+            for code in SortedDict(settings.LANGUAGES):
+                if code != lang:  # Already done
+                    try:
+                        activate(code)
+                    except:
+                        pass
+                    else:
+                        obj.save()
+            activate(lang)
 
 
 class BaseDynamicInlineAdmin(object):
@@ -77,26 +122,53 @@ class BaseDynamicInlineAdmin(object):
     form = DynamicInlineAdminForm
     extra = 20
 
-    def __init__(self, *args, **kwargs):
-        super(BaseDynamicInlineAdmin, self).__init__(*args, **kwargs)
+    def get_fields(self, request, obj=None):
+        fields = super(BaseDynamicInlineAdmin, self).get_fields(request, obj)
         if issubclass(self.model, Orderable):
-            fields = self.fields
-            if not fields:
-                fields = self.model._meta.fields
-                exclude = self.exclude or []
-                fields = [f.name for f in fields if f.editable and
-                    f.name not in exclude and not isinstance(f, AutoField)]
-            if "_order" in fields:
-                del fields[fields.index("_order")]
-                fields.append("_order")
-            self.fields = fields
+            fields = list(fields)
+            try:
+                fields.remove("_order")
+            except ValueError:
+                pass
+            fields.append("_order")
+        return fields
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super(BaseDynamicInlineAdmin, self).get_fieldsets(
+                                                            request, obj)
+        if issubclass(self.model, Orderable):
+            for fieldset in fieldsets:
+                fields = [f for f in list(fieldset[1]["fields"])
+                          if not hasattr(f, "translated_field")]
+                try:
+                    fields.remove("_order")
+                except ValueError:
+                    pass
+                fieldset[1]["fields"] = fields
+            fieldsets[-1][1]["fields"].append("_order")
+        return fieldsets
 
 
-class TabularDynamicInlineAdmin(BaseDynamicInlineAdmin, admin.TabularInline):
+def getInlineBaseClass(cls):
+    if settings.USE_MODELTRANSLATION:
+        class InlineBase(TranslationInlineModelAdmin, cls):
+            """
+            Abstract class that mimics django-modeltranslation's
+            Translation{Tabular,Stacked}Inline. Used as a placeholder
+            for future improvement.
+            """
+            pass
+        return InlineBase
+    return cls
+
+
+class TabularDynamicInlineAdmin(BaseDynamicInlineAdmin,
+                                getInlineBaseClass(admin.TabularInline)):
     template = "admin/includes/dynamic_inline_tabular.html"
 
 
-class StackedDynamicInlineAdmin(BaseDynamicInlineAdmin, admin.StackedInline):
+class StackedDynamicInlineAdmin(BaseDynamicInlineAdmin,
+                                getInlineBaseClass(admin.StackedInline)):
     template = "admin/includes/dynamic_inline_stacked.html"
 
     def __init__(self, *args, **kwargs):
@@ -136,7 +208,7 @@ class OwnableAdmin(admin.ModelAdmin):
             obj.user = request.user
         return super(OwnableAdmin, self).save_form(request, form, change)
 
-    def queryset(self, request):
+    def get_queryset(self, request):
         """
         Filter the change list by currently logged in user if not a
         superuser. We also skip filtering if the model for this admin
@@ -150,7 +222,7 @@ class OwnableAdmin(admin.ModelAdmin):
         model_name = ("%s.%s" % (opts.app_label, opts.object_name)).lower()
         models_all_editable = settings.OWNABLE_MODELS_ALL_EDITABLE
         models_all_editable = [m.lower() for m in models_all_editable]
-        qs = super(OwnableAdmin, self).queryset(request)
+        qs = super(OwnableAdmin, self).get_queryset(request)
         if request.user.is_superuser or model_name in models_all_editable:
             return qs
         return qs.filter(user__id=request.user.id)

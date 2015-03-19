@@ -4,14 +4,12 @@ from django.contrib import admin
 from django.contrib.messages import info
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_lazy as _
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    # Backward compatibility for Py2 and Django < 1.5
-    from django.utils.encoding import force_unicode as force_text
+from django.utils.encoding import force_text
 
 from mezzanine.conf.models import Setting
 from mezzanine.conf.forms import SettingsForm
+from mezzanine.utils.cache import (cache_delete, cache_installed,
+                                   cache_key_prefix)
 from mezzanine.utils.urls import admin_url
 
 
@@ -22,7 +20,18 @@ class SettingsAdmin(admin.ModelAdmin):
     """
 
     class Media:
-        css = {"all": ("mezzanine/css/admin/settings.css",)}
+        js = (
+            'modeltranslation/js/force_jquery.js',
+            '//ajax.googleapis.com/ajax/libs/jqueryui'
+                    '/1.8.2/jquery-ui.min.js',
+            'mezzanine/js/admin/tabbed_translatable_settings.js',
+        )
+        css = {
+            'all': (
+                'mezzanine/css/admin/tabbed_translation_fields.css',
+                'mezzanine/css/admin/settings.css',
+            ),
+        }
 
     def changelist_redirect(self):
         changelist_url = admin_url(Setting, "changelist")
@@ -41,6 +50,10 @@ class SettingsAdmin(admin.ModelAdmin):
         if settings_form.is_valid():
             settings_form.save()
             info(request, _("Settings were successfully updated."))
+            if cache_installed():
+                cache_key = (cache_key_prefix(request, ignore_device=True) +
+                             "context-settings")
+                cache_delete(cache_key)
             return self.changelist_redirect()
         extra_context["settings_form"] = settings_form
         extra_context["title"] = u"%s %s" % (

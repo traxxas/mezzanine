@@ -1,18 +1,18 @@
 from __future__ import unicode_literals
 from future.builtins import open, range, str
-from future.utils import native_str
 
 from _ast import PyCF_ONLY_AST
 import os
 from shutil import copyfile, copytree
 
+from django.contrib.auth import get_user_model
 from django.db import connection
 from django.template import Context, Template
 from django.test import TestCase as BaseTestCase
+from django.test.client import RequestFactory
 
 from mezzanine.conf import settings
 from mezzanine.utils.importing import path_for_import
-from mezzanine.utils.models import get_user_model
 
 
 User = get_user_model()
@@ -44,10 +44,14 @@ IGNORE_ERRORS = (
     "redefinition of unused 'Image",
 
     # Django 1.5 custom user compatibility
-    "redefinition of unused 'get_user_model",
+    "'get_user_model' imported but unused",
 
-    # Deprecated compat timezones for Django 1.3
-    "mezzanine/utils/timezone",
+    # Actually a Python template file.
+    "live_settings.py",
+
+    # lambdas are OK.
+    "do not assign a lambda",
+
 )
 
 
@@ -59,29 +63,46 @@ class TestCase(BaseTestCase):
 
     def setUp(self):
         """
-        Creates an admin user and sets up the debug cursor, so that
-        we can track the number of queries used in various places.
+        Creates an admin user, sets up the debug cursor, so that we can
+        track the number of queries used in various places, and creates
+        a request factory for views testing.
         """
         self._username = "test"
         self._password = "test"
-        args = (self._username, "example@example.com", self._password)
+        self._emailaddress = "example@example.com"
+        args = (self._username, self._emailaddress, self._password)
         self._user = User.objects.create_superuser(*args)
-        self._debug_cursor = connection.use_debug_cursor
-        connection.use_debug_cursor = True
+        self._request_factory = RequestFactory()
+
+        try:
+            # Django 1.8+
+            self._debug_cursor = connection.force_debug_cursor
+            connection.force_debug_cursor = True
+        except AttributeError:
+            self._debug_cursor = connection.use_debug_cursor
+            connection.use_debug_cursor = True
 
     def tearDown(self):
         """
         Clean up the admin user created and debug cursor.
         """
         self._user.delete()
-        connection.use_debug_cursor = self._debug_cursor
+        try:
+            # Django 1.8+
+            connection.force_debug_cursor = self._debug_cursor
+        except AttributeError:
+            connection.use_debug_cursor = self._debug_cursor
 
     def queries_used_for_template(self, template, **context):
         """
         Return the number of queries used when rendering a template
         string.
         """
-        connection.queries = []
+        try:
+            # Django 1.8+ - queries_log is a deque
+            connection.queries_log.clear()
+        except AttributeError:
+            connection.queries = []
         t = Template(template)
         t.render(Context(context))
         return len(connection.queries)
@@ -132,16 +153,11 @@ def _run_checker_for_package(checker, package_name, extra_ignore=None):
     if extra_ignore:
         ignore_strings += extra_ignore
     package_path = path_for_import(package_name)
-    for (root, dirs, files) in os.walk(package_path):
+    for (root, dirs, files) in os.walk(str(package_path)):
         for f in files:
-            # Ignore migrations.
-            directory = root.split(os.sep)[-1]
-            # Using native_str here avoids the dreaded UnicodeDecodeError
-            # on Py2 with filenames with high-bit characters when
-            # unicode_literals in effect:
-            ext = native_str(".py")
-            if (f == "local_settings.py" or not f.endswith(ext)
-                or directory == "migrations"):
+            if (f == "local_settings.py" or not f.endswith(".py") or
+                    root.split(os.sep)[-1] in ["migrations", "south"]):
+                # Ignore
                 continue
             for warning in checker(os.path.join(root, f)):
                 for ignore in ignore_strings:

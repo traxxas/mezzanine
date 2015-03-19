@@ -5,12 +5,14 @@ from future.utils import with_metaclass
 from bleach import clean
 
 from django.conf import settings
+from django.contrib.admin.widgets import AdminTextareaWidget
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import models
 from django.forms import MultipleChoiceField
 from django.utils.text import capfirst
 from django.utils.translation import ugettext_lazy as _
 
+from mezzanine.core.forms import OrderWidget
 from mezzanine.utils.importing import import_dotted_path
 
 
@@ -25,6 +27,13 @@ LOW_FILTER_ATTRS = ("allowfullscreen", "autostart", "loop", "hidden",
                     "playcount", "volume", "controls", "data", "classid")
 
 
+class OrderField(models.IntegerField):
+    def formfield(self, **kwargs):
+        kwargs.update({'widget': OrderWidget,
+                       'required': False})
+        return super(OrderField, self).formfield(**kwargs)
+
+
 class RichTextField(models.TextField):
     """
     TextField that stores HTML.
@@ -35,14 +44,17 @@ class RichTextField(models.TextField):
         Apply the widget class defined by the
         ``RICHTEXT_WIDGET_CLASS`` setting.
         """
-        from mezzanine.conf import settings
-        try:
-            widget_class = import_dotted_path(settings.RICHTEXT_WIDGET_CLASS)
-        except ImportError:
-            raise ImproperlyConfigured(_("Could not import the value of "
-                                         "settings.RICHTEXT_WIDGET_CLASS: %s"
-                                         % settings.RICHTEXT_WIDGET_CLASS))
-        kwargs["widget"] = widget_class()
+        default = kwargs.get("widget", None) or AdminTextareaWidget
+        if default is AdminTextareaWidget:
+            from mezzanine.conf import settings
+            richtext_widget_path = settings.RICHTEXT_WIDGET_CLASS
+            try:
+                widget_class = import_dotted_path(richtext_widget_path)
+            except ImportError:
+                raise ImproperlyConfigured(_("Could not import the value of "
+                                             "settings.RICHTEXT_WIDGET_CLASS: "
+                                             "%s" % richtext_widget_path))
+            kwargs["widget"] = widget_class()
         kwargs.setdefault("required", False)
         formfield = super(RichTextField, self).formfield(**kwargs)
         return formfield

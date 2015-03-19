@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 from future.builtins import bytes, str
-import sys
 
 from django.conf import settings as django_settings
 from django.utils.unittest import skipUnless
@@ -12,9 +11,69 @@ from mezzanine.utils.tests import TestCase
 
 class ConfTests(TestCase):
 
-    @skipUnless(sys.version_info[0] == 2,
-                "Randomly fails or succeeds under Python 3 as noted in "
-                "GH #858 - please fix.")
+    @skipUnless(False, "Only run manually - see Github issue #1126")
+    def test_threading_race(self):
+        import multiprocessing.pool
+        import random
+        from django.db import connections
+
+        type_modifiers = {int: lambda s: s + 1,
+                          float: lambda s: s + 1.0,
+                          bool: lambda s: not s,
+                          str: lambda s: s + u"test",
+                          bytes: lambda s: s + b"test"}
+
+        # Store a non-default value for every editable setting in the database
+        editable_settings = {}
+        for setting in registry.values():
+            if setting["editable"]:
+                modified = type_modifiers[setting["type"]](setting["default"])
+                Setting.objects.create(name=setting["name"], value=modified)
+                editable_settings[setting["name"]] = modified
+
+        # Make our child threads use this thread's connections. Recent SQLite
+        # do support access from multiple threads for in-memory databases, but
+        # Django doesn't support it currently - so we have to resort to this
+        # workaround, taken from Django's LiveServerTestCase.
+        # See Django ticket #12118 for discussion.
+        connections_override = {}
+        for conn in connections.all():
+            # If using in-memory sqlite databases, pass the connections to
+            # the server thread.
+            if (conn.vendor == 'sqlite' and
+                    conn.settings_dict['NAME'] == ':memory:'):
+                # Explicitly enable thread-shareability for this connection
+                conn._old_allow_thread_sharing = conn.allow_thread_sharing
+                conn.allow_thread_sharing = True
+                connections_override[conn.alias] = conn
+
+        def initialise_thread():
+            for alias, connection in connections_override.items():
+                connections[alias] = connection
+
+        thread_pool = multiprocessing.pool.ThreadPool(8, initialise_thread)
+
+        def retrieve_setting(setting_name):
+            settings.use_editable()
+            return setting_name, getattr(settings, setting_name)
+
+        def choose_random_setting(length=5000):
+            choices = list(editable_settings)
+            for _ in range(length):
+                yield random.choice(choices)
+
+        try:
+            for setting in thread_pool.imap_unordered(retrieve_setting,
+                                                      choose_random_setting()):
+                name, retrieved_value = setting
+                self.assertEqual(retrieved_value, editable_settings[name])
+        finally:
+            for conn in connections_override.values():
+                conn.allow_thread_sharing = conn._old_allow_thread_sharing
+                del conn._old_allow_thread_sharing
+            Setting.objects.all().delete()
+            settings.use_editable()
+
     def test_settings(self):
         """
         Test that an editable setting can be overridden with a DB
@@ -55,15 +114,14 @@ class ConfTests(TestCase):
         setting of the same name.
         """
         Setting.objects.all().delete()
-        django_settings.SITE_TAGLINE = "This tagline is set in settings.py."
-        db_tagline = Setting(name="SITE_TAGLINE",
-                             value="This tagline is set in the database.")
-        db_tagline.save()
+        django_settings.FOO = "Set in settings.py"
+        db_value = Setting(name="FOO", value="Set in database")
+        db_value.save()
         settings.use_editable()
-        first_tagline = settings.SITE_TAGLINE
-        settings.SITE_TITLE
-        second_tagline = settings.SITE_TAGLINE
-        self.assertEqual(first_tagline, second_tagline)
+        first_value = settings.FOO
+        settings.SITE_TITLE  # Triggers access?
+        second_value = settings.FOO
+        self.assertEqual(first_value, second_value)
 
     def test_bytes_conversion(self):
         register_setting(name="BYTES_TEST_SETTING", editable=True, default=b"")
@@ -71,3 +129,10 @@ class ConfTests(TestCase):
                                value="A unicode value")
         settings.use_editable()
         self.assertEqual(settings.BYTES_TEST_SETTING, b"A unicode value")
+
+    def test_modeltranslation_configuration(self):
+        """
+        Test that modeltranslation is properly configured in settings.
+        """
+        if settings.USE_MODELTRANSLATION:
+            self.assertTrue(settings.USE_I18N)

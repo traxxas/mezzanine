@@ -152,7 +152,11 @@ class FormForForm(forms.ModelForm):
             if "max_length" in arg_names:
                 field_args["max_length"] = settings.FORMS_FIELD_MAX_LENGTH
             if "choices" in arg_names:
-                field_args["choices"] = field.get_choices()
+                choices = list(field.get_choices())
+                if (field.field_type == fields.SELECT and
+                        field.default not in [c[0] for c in choices]):
+                    choices.insert(0, ("", field.placeholder_text))
+                field_args["choices"] = choices
             if field_widget is not None:
                 field_args["widget"] = field_widget
             #
@@ -191,7 +195,7 @@ class FormForForm(forms.ModelForm):
             setattr(self.fields[field_key], "type",
                     field_class.__name__.lower())
             if (field.required and settings.FORMS_USE_HTML5 and
-                field.field_type != fields.CHECKBOX_MULTIPLE):
+                    field.field_type != fields.CHECKBOX_MULTIPLE):
                 self.fields[field_key].widget.attrs["required"] = ""
             if field.placeholder_text and not field.default:
                 text = field.placeholder_text
@@ -256,7 +260,7 @@ class EntriesForm(forms.Form):
         self.request = request
         self.form_fields = form.fields.all()
         self.entry_time_name = str(FormEntry._meta.get_field(
-            "entry_time").verbose_name).encode("utf-8")
+            "entry_time").verbose_name)
         super(EntriesForm, self).__init__(*args, **kwargs)
         for field in self.form_fields:
             field_key = "field_%s" % field.id
@@ -320,7 +324,7 @@ class EntriesForm(forms.Form):
         """
         Returns the list of selected column names.
         """
-        fields = [f.label.encode("utf-8") for f in self.form_fields
+        fields = [f.label for f in self.form_fields
                   if self.cleaned_data["field_%s_export" % f.id]]
         if self.cleaned_data["field_0_export"]:
             fields.append(self.entry_time_name)
@@ -352,8 +356,9 @@ class EntriesForm(forms.Form):
 
         # Get the field entries for the given form and filter by entry_time
         # if specified.
-        field_entries = FieldEntry.objects.filter(entry__form=self.form
-            ).order_by("-entry__id").select_related(depth=1)
+        field_entries = FieldEntry.objects.filter(
+            entry__form=self.form).order_by(
+            "-entry__id").select_related("entry")
         if self.cleaned_data["field_0_filter"] == FILTER_CHOICE_BETWEEN:
             time_from = self.cleaned_data["field_0_from"]
             time_to = self.cleaned_data["field_0_to"]
@@ -413,7 +418,6 @@ class EntriesForm(forms.Form):
                     field_value = mark_safe("<a href=\"%s\">%s</a>" % parts)
             # Only use values for fields that were selected.
             try:
-                field_value = field_value.encode("utf-8")
                 current_row[field_indexes[field_id]] = field_value
             except KeyError:
                 pass

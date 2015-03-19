@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
-from django.contrib.comments.admin import CommentsAdmin
+from django_comments.admin import CommentsAdmin
 from django.utils.translation import ugettext_lazy as _
 
 from mezzanine.conf import settings
@@ -27,6 +27,11 @@ class ThreadedCommentAdmin(CommentsAdmin):
         actions.pop("delete_selected")
         actions.pop("flag_comments")
         return actions
+
+    # Disable the 'Add' action for this model, fixed a crash if you try
+    # to create a comment from admin panel
+    def has_add_permission(self, request):
+        return False
 
 
 generic_comments = getattr(settings, "COMMENTS_APP", "") == "mezzanine.generic"

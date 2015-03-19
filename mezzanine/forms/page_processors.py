@@ -33,6 +33,10 @@ def form_processor(request, page):
         url = page.get_absolute_url() + "?sent=1"
         if is_spam(request, form, url):
             return redirect(url)
+        attachments = []
+        for f in form.files.values():
+            f.seek(0)
+            attachments.append((f.name, f.read()))
         entry = form.save()
         subject = page.form.email_subject
         if not subject:
@@ -55,13 +59,9 @@ def form_processor(request, page):
             headers = {'Reply-To': email_to}
         email_copies = split_addresses(page.form.email_copies)
         if email_copies:
-            attachments = []
-            for f in form.files.values():
-                f.seek(0)
-                attachments.append((f.name, f.read()))
-            send_mail_template(subject, "email/form_response", email_from,
-                               email_copies, context, attachments=attachments,
-                               headers=headers)
+            send_mail_template(subject, "email/form_response_copies",
+                               email_from, email_copies, context,
+                               attachments=attachments, headers=headers)
         form_valid.send(sender=request, form=form, entry=entry)
         return redirect(url)
     form_invalid.send(sender=request, form=form)
