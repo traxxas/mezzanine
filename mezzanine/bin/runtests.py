@@ -4,6 +4,7 @@ import atexit
 import os
 import shutil
 import sys
+import django
 
 import django
 
