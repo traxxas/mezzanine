@@ -52,7 +52,7 @@ def send_mail_template(subject, template, addr_from, addr_to, context=None,
         addr_to = [addr_to]
     if addr_bcc is not None and (isinstance(addr_bcc, str) or
                                  isinstance(addr_bcc, bytes)):
-        addr_bcc = [addr_bcc]
+        addr_bcc = split_addresses(addr_bcc)
     # Loads a template passing in vars as context.
     render = lambda type: loader.get_template("%s.%s" %
                           (template, type)).render(Context(context))
