@@ -81,7 +81,7 @@ class PageAdmin(DisplayableAdmin):
                     if not hasattr(field, "translated_field"):
                         self.fieldsets[0][1]["fields"].insert(3, field.name)
 
-    def in_menu(self):
+    def has_module_permission(self, request):
         """
         Hide subclasses from the admin menu.
         """
@@ -235,6 +235,7 @@ class LinkAdmin(PageAdmin):
         """
         if db_field.name == "slug":
             kwargs["required"] = True
+            kwargs["help_text"] = None
         return super(LinkAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
     def save_form(self, request, form, change):
