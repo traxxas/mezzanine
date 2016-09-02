@@ -97,6 +97,9 @@ def initialize_nevercache():
             return parsed
 
 
+initialize_nevercache()
+
+
 @register.simple_tag(takes_context=True)
 def fields_for(context, form, template="includes/form_fields.html"):
     """
