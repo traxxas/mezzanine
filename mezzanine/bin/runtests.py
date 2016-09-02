@@ -4,9 +4,10 @@ import atexit
 import os
 import shutil
 import sys
-import django
 
 import django
+
+from django.core.management import call_command
 
 
 def main(package="mezzanine"):
@@ -63,8 +64,11 @@ PASSWORD_HASHERS = ('django.contrib.auth.hashers.MD5PasswordHasher',)
 
     django.setup()
 
+
     from django.core.management.commands import test
-    sys.exit(test.Command().execute(verbosity=1))
+    if django.VERSION < (1, 10):
+        sys.exit(test.Command().execute(verbosity=1))
+    sys.exit(call_command(test.Command(), verbosity=1))
 
 
 if __name__ == "__main__":
