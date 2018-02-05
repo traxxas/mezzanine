@@ -21,6 +21,7 @@ from django.contrib.admin import AdminSite
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.sites.models import Site
 from django.core import mail
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.forms import Textarea
@@ -34,7 +35,7 @@ from django.utils.html import strip_tags
 
 from mezzanine.conf import settings
 from mezzanine.core.admin import BaseDynamicInlineAdmin
-from mezzanine.core.fields import RichTextField
+from mezzanine.core.fields import RichTextField, MultiChoiceField
 from mezzanine.core.managers import DisplayableManager
 from mezzanine.core.models import (CONTENT_STATUS_DRAFT,
                                    CONTENT_STATUS_PUBLISHED)
@@ -641,6 +642,24 @@ class ContentTypedTestCase(TestCase):
         self.assertEqual(page.content_model, 'richtextpage')
         self.assertEqual(page.get_content_model(), richtextpage)
 
+    def test_set_content_model_again(self):
+        """
+        Content model cannot change after initial save.
+
+        That's the only time we'll know for certain that the __class__ is the
+        lowest class in the hierarchy. Of course, content_model will keep
+        getting set to None for base concrete classes, which is confusing but
+        not necessarily a problem.
+        """
+        richtextpage = RichTextPage.objects.create()
+        richtextpage.set_content_model()
+        page = Page.objects.get(pk=richtextpage.pk)
+        self.assertEqual(page.content_model, 'richtextpage')
+        self.assertEqual(page.get_content_model(), richtextpage)
+        page.set_content_model()
+        self.assertEqual(page.content_model, 'richtextpage')
+        self.assertEqual(page.get_content_model(), richtextpage)
+
     def test_contenttyped_admin_redirects(self):
         self.client.login(username=self._username, password=self._password)
 
@@ -654,3 +673,14 @@ class ContentTypedTestCase(TestCase):
         response = self.client.get(admin_url(Page, "change", richtext.pk))
         richtext_change_url = admin_url(RichTextPage, "change", richtext.pk)
         self.assertRedirects(response, richtext_change_url)
+
+
+class FieldsTestCase(TestCase):
+    def test_multichoicefield_validate_valid(self):
+        field = MultiChoiceField(choices=[('valid choice',)])
+        field.validate(['valid choice'], None)
+
+    def test_multichoicefield_validate_invalid(self):
+        field = MultiChoiceField(choices=[('valid choice',)])
+        with self.assertRaises(ValidationError):
+            field.validate(['invalid choice'], None)

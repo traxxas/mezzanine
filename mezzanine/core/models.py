@@ -300,11 +300,11 @@ class Displayable(Slugged, MetaData, TimeStamped):
         permanently store ``get_absolute_url``, since it may change
         over time.
         """
-        if self.short_url == SHORT_URL_UNSET:
-            self.short_url = self.get_absolute_url_with_host()
-        elif not self.short_url:
+        if not self.short_url or self.short_url == SHORT_URL_UNSET:
             self.short_url = self.generate_short_url()
             self.save()
+        if self.short_url == SHORT_URL_UNSET:
+            self.short_url = self.get_absolute_url_with_host()
 
     def generate_short_url(self):
         """
@@ -534,10 +534,11 @@ class ContentTyped(models.Model):
         Set content_model to the child class's related name, or None if this is
         the base class.
         """
-        is_base_class = (
-            base_concrete_model(ContentTyped, self) == self.__class__)
-        self.content_model = (
-            None if is_base_class else self.get_content_model_name())
+        if not self.content_model:
+            is_base_class = (
+                base_concrete_model(ContentTyped, self) == self.__class__)
+            self.content_model = (
+                None if is_base_class else self.get_content_model_name())
 
     def get_content_model(self):
         """
