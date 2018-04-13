@@ -1,3 +1,158 @@
+Version 4.2.3 (Mar 10, 2017)
+----------------------------
+
+  * Test ``MultiChoiceField.validate`` when invalid. For the record, this raises a TypeError prior to Simen's commit - ryneeverett
+  * Test ``MultiChoiceField.validate`` when valid. Also, I realized that the `choices` kwarg needs to be a nested list - ryneeverett
+  * Ensure createdb command passes on the exepcted options to base class - Stephen McDonald
+  * Workaround for Django bug with templates field and empty values - Stephen McDonald
+  * Update travis django versions. (#1683). See discussion at. ``https://github.com/stephenmcd/mezzanine/commit/1866997c64725b3161b59628c8deaee544f0c473`` - ryneeverett
+  * Subclass Django's redirect admin to filter by site - Stephen McDonald
+  * Remove "Overriding vs. Extending" Docs. I know we discussed this a little bit somewhere and rewriting this. section was suggested. However, I don't see any reason to keep it. around. This was always a django issue but we provided a. mezzanine-specific solution. Now that there's a django solution, why. clutter our docs with it? - ryneeverett
+  * Fix ``SSLRedirectMiddleware.__init__`` signature. As reported on the mailing list. ``(https://groups.google.com/d/msg/mezzanine-users/d5mcAMOVcnk/uqw61LyjAwAJ),``. this raised a TypeError because the `get_response` argument is optional - ryneeverett
+  * Move “required” from field help text to template. The forms app used to set “required” as the help text for fields that. are required and didn’t have a help text already. Move this text into. the template instead, making it easier to override - Simen Heggestøyl
+  * Use ``call_command()`` instead of execute() (#1691) - Geoffrey ROYER
+  * Remove the ``no_color`` handling in createdb management command (#1691) - Geoffrey ROYER
+  * Fix example in profile docs - Stephen McDonald
+  * Remove outdated message regarding auto-reload. Since ``local_settings.py`` is added to ``sys.modules``, the autoreload is working as expected. See: ``https://github.com/stephenmcd/mezzanine/blob/master/mezzanine/project_template/project_name/settings.py#L308`` - Ed Rivas
+  * Document ``static_lazy's`` purpose. This is a summary of the reasoning in. ``https://github.com/stephenmcd/mezzanine/pull/1411`` - ryneeverett
+  * Update contributing guidelines to reflect practice. The language here is too broad and has caused several users to submit. high quality bug reports or patches to the mailing list when it's. actually easier to deal with them in the tracker - ryneeverett
+  * Fix TinyMCE support in dynamic inlines (#1674). * Fix TinyMCE support in dynamic inlines. Use TinyMCE’s jQuery plugin to initialise our editors, and handle. Django’s formset:added event to initialise editors in dynamically added. forms. * Tidy up TinyMCE initialisation code. * Call out changes to ``jquery.tinymce.min.js`` more visibly - Alex Hill
+  * Warn when editing admin users without permissions. Closes #1707 - Stephen McDonald
+  * Move contributing guidelines to ``CONTRIBUTING.rst``. This will present itself before people open issues which should cut down. on a lot of the erroneous ones - ryneeverett
+  * Fix short URL generation - Stephen McDonald
+  * Add support for importing via blogml - Evan Mattiza
+  * Clean up blogml importer - Stephen McDonald
+  * Added python 3.6 (#1720) - Andrii Soldatenko
+  * Deprecate ``as_tag`` templatetag shortcut. It isn't documented but folks may be using it anyway. We can't switch. over to ``simple_tag`` internally yet until we drop support for ``django-1.8`` - ryneeverett
+  * Restore tinymce support in front-end editing. Closes #1718 - Stephen McDonald
+  * Fix caching editable settings forever when no request - David Sanders
+  * Blog RSS feed - set length property for images (enclosure) - Yuri Prezument
+  * Blog RSS - add ``mime_type`` for images (enclosure) - Yuri Prezument
+  * Blog Atom feed - add "updatedate" property - Yuri Prezument
+  * Fix issue with PyPy2 (#1725). Under PyPy2 you can't do u"foo" == lazy(static, str)("bar") because the. code assumes dir(str) is a strict subset of dir(unicode), which isn't. true on PyPy2. The other way around is no problem however, and the. other strings in the static assets lists are unicode anyway - Ernst Sjöstrand
+  * Fix issue 1710. During user validation, only save POST data in session if it is a POST. request, otherwise saved comment may be overwritten by GET request that. results from redirect if user verification is required - Chris Hawes
+  * Re-order JavaScript loading to ensure TinyMCE has access to correct variables. Closes #1728 - Stephen McDonald
+  * Nicer way to import and register checks. The previous way meant every check gets mentioned 3 times (def, import,. register), with this way it is just once, and all the ``django.core.checks``. are together - Luke Plant
+  * Converted SitePermissionMiddleware warning to a Django check. Refs issue #1400 - Luke Plant
+  * Added hashbangs/permission bits to make scripts more easily runnable - Luke Plant
+  * Made it easier to run individual tests - Luke Plant
+  * Documented how to run tests - Luke Plant
+  * Fixed pyflakes errors for ``.checks`` imports - Luke Plant
+  * Fixed login form to not use ``request.REQUEST``. This is not available in Django 1.9 and greater, so without this fix the. forms are (slightly) broken. There doesn't seem to be any reason to use. REQUEST instead of POST - the form is a POST one, and the parameters are not. used elsewhere in the code base to construct a querystring - Luke Plant
+  * Fixed search forms to use ``request.GET`` instead of ``request.REQUEST``. ``request.REQUEST`` is not available in Django 1.9 and greater - Luke Plant
+  * Support latest bleach, BS, html5lib. Closes #1741, closes #1742, closes #1743 - Stephen McDonald
+
+Version 4.2.2 (Sep 25, 2016)
+----------------------------
+
+  * Add an option for turning off the runserver banner. Add an option to Mezzanine’s runserver command for not showing the. banner at startup - Simen Heggestøyl
+  * Only set ``content_model`` first time. Fix #1676 - ryneeverett
+
+Version 4.2.1 (Sep 19, 2016)
+----------------------------
+
+  * Stop using deprecated template settings. - ``TEMPLATE_DIRS``. - ``TEMPLATE_LOADERS``. I think these must have been actually removed in ``django-1.10.0`` because. they're throwing AttributeError's now - ryneeverett
+  * Remove deprecated ``richtext_filter`` tag. I don't see how the fallback could even work without the user defining. ``RICHTEXT_FILTERS`` as empty in their own settings, because it defaults to. `("mezzanine.utils.html.thumbnails",)` so the `if not filternames` path. would never be taken. Give that the fallback does nothing, I think. printing a warning is deceptive so better just to remove it entirely - ryneeverett
+  * Fixed crash in ``Page.get_ascendants`` with non-current site - Alex Hill
+  * Add ``override_current_site_id`` context manager - Alex Hill
+  * Make sure a thread-local request is set in PagesTests. We rely in these tests on a “current request” being stored as a. thread-local, but without explicitly assigning one we were dependent on. other tests that make requests being executed before these - Alex Hill
+  * Exclude ``.pyc``, ``.pyo`` and ``__pycache__`` files from release - Edward Betts
+  * Correctly handle custom email fields in ``mezzanine.forms``. The `is_a` method checks whether a field is one of Mezzanine's built-in. form fields. As far as I can tell, every other usage is for the purpose. of initializing the built-in fields and widgets, so it makes sense to. exclude user-defined fields. However in this instance, we only want to know whether the field is an. EmailField, not that it is *the* built-in Mezzanine email field. Therefore, check the class rather than identity. The effective change here is that user-defined fields (in. ``FORMS_EXTRA_FIELDS)`` which subclass django's EmailField will be able to. receive confirmation emails - ryneeverett
+  * Remove redundant assignment of ``request.site_id`` - Alex Hill
+  * Add compatibility with the Django 1.10 MIDDLEWARE setting - Samir Shah
+  * Add more docstrings to ContentTyped - ryneeverett
+  * Set base ContentTyped ``content_model`` to None. Per discussion with @AlexHill in cartridge#293, ``content_model`` is the. name of django's automatic OneToOneField's linking the concrete base. class inheriting from ContentTyped to it's subclasses. There is no such. field when the base class itself is instantiated, so the ``content_model``. should be None - ryneeverett
+  * ``ContentTyped.get_content_model()`` should return instance, not class - Alex Hill
+  * Test admin redirects for ContentTyped models - Alex Hill
+  * Small error documentation. I think there are a small error : fields (plural) not field - Anthony
+  * Add some MIDDLEWARE compatibility fixes that were missing from #1660. Also change the way in which the middleware setting is determined. A statis variable will fail when settings are modified on the fly, ``e.g.``, when running tests - Samir Shah
+  * Fix positional argument count on ``get_db_prep_value`` - Jeff Cook
+  * Restore context vars in ``admin_dropdown_menu`` templatetag. Closes #1669 - Stephen McDonald
+  * Fix request context for form entries in admin - Stephen McDonald
+  * Fix template for form entries in admin - Stephen McDonald
+  * Fix overextends tag with cached template loader - Alex Hill
+  * Deprecate overextends tag since Django now includes its functionality - Alex Hill
+  * Remove some obsolete checks for Django < 1.8 - Alex Hill
+  * Deprecate SSLRedirectMiddleware. Resolve #1600. Also, set default SSL settings to `editable=False` so they do not. display in the settings by default - ryneeverett
+  * Move most Field functionality into abstract base class - Alex Hill
+  * Escape comment usernames in admin list - Stephen McDonald
+  * Move richtext filtering into a util function - Stephen McDonald
+
+Version 4.2.0 (Aug 12, 2016)
+----------------------------
+
+  * Update collecttemplates command for 4.1. Closes #1512 - Stephen McDonald
+  * Return correct HTTP error response if static proxy cannot find requested file - Stephen McDonald
+  * Fix dummy homepage object in sitemap. Closes #1516 - Stephen McDonald
+  * Fixes #1449 -- duplicate profile fields in admin - Alex Hill
+  * Move template form CSS rule to grappelli-safe - Alex Hill
+  * Removed nesting of Context objects. Inclusion tags should: * Return dictionaries, not Context objects. * Explicitly pass all needed data to their templates. * Not modify passed in Context object ideally. No code should wrap Context objects in further Context objects, as this. causes errors in some contexts - Luke Plant
+  * Fix blog pagination due to Django 1.9 change - Stephen McDonald
+  * Don't load user model at import time in tests - Stephen McDonald
+  * Move misc admin related urlpatterns under /admin/ for better compatibility with SSLRedirectMiddleware. Closes #1365 - Stephen McDonald
+  * Fix user creation with required profile fields - Alex Hill
+  * Removed syncdb from deploy as it is no longer supported in ``Django1.9`` and has been depricated since 1.7, migrate is used instead - Douglas Kastle
+  * Use Django's native dynamic inline mechanism - Alex Hill
+  * Remove custom dynamic inline templates - Alex Hill
+  * Support with i18n urlpatterns with ``SSL_FORCE_URL_PREFIXES``. Closes #1456 - Stephen McDonald
+  * Restore the ordering-related parts of ``dynamic_inline.js``. We still need to use ``dynamic_inline.js`` for its custom ordering code, but we can remove everything related to dynamically adding and removing inline forms since we're now using Django's built-in mechanisms for that - Alex Hill
+  * Remove now-unused dynamic inline templates - Alex Hill
+  * Update Python/Django versions in documentation - Stephen McDonald
+  * Accept either CDATA or text nodes for WordPress comments. ,. All text output is CDATA in an export from WordPress 4.4.2. It is hoped. that accepting either text or CDATA as node type will be compatible. with exports from all versions of WordPress - Jeff Cook
+  * Changed proxy to resolve mime types using the mimetypes library for python - Andrew Cassidy
+  * Google Chrome seems to interpret an empty response as. <html><body></body></html> so forced ``content_type`` to text/plain to. prevent Chrome handling it in this way - Andrew Cassidy
+  * Changed free themes url. I have changed the URL for the free themes - thecodinghouse
+  * Fix help text for Link page URL. The field is required, but the inherited help text says it's optional - Gavin Wahl
+  * Add Coveralls coverage testing to CI, per #1012 - ryneeverett
+  * Clear ``TEST_COLLATION`` deprecation warning - David Sanders
+  * Add Federation of Egalitarian Communities Website - Pavan Rikhi
+  * Only autofocus visible fields with Html5Mixin - David Sanders
+  * Ensure csrftoken cookie is set inside nevercache tag - David Sanders
+  * Remove check for CSRF token before re-running CSRF middleware - David Sanders
+  * Add testcase for nevercache and CSRF cookie - David Sanders
+  * Response should be marked as CSRF processing not done, not request - David Sanders
+  * Fix unicode errors in user agent check for devices. Closes #1589 - Stephen McDonald
+  * ``ModelAdmin.in_menu`` -> ``has_module_permission``. Deprecate `ModelAdmin.in_menu` now that django has an equivalent method,. `ModelAdmin.has_module_permission`. See. ``<https://docs.djangoproject.com/en/1.9/ref/contrib/admin/#django.contrib.admin.ModelAdmin.has_module_permission>`` - ryneeverett
+  * Replace undocumented ``ModelAdmin.get_model_perms``. Instead use the documented methods `ModelAdmin.has_change_permission`. and `ModelAdmin.has_add_permission` - ryneeverett
+  * Fix tests for pyflakes 1.2.x. The warning message now includes the module name - ryneeverett
+  * Fix selector of the ``_order`` field to make stacked inlines sortable - Eduardo Rivas
+  * Catch TinyMCE errors when trying to save inlines. Previously this used to prevent the new ``_order`` values from being computed - Eduardo Rivas
+  * Annotate special handling of the ``_order`` field in inlines - Eduardo Rivas
+  * Add CSS to hide the ``_order`` field in stacked inlines - Eduardo Rivas
+  * Constrain content images to max width in default templates - Stephen McDonald
+  * un-urlencode thumbnail filenames. Closes #1580 - Stephen McDonald
+  * Clarify format of ``ADMIN_REMOVAL`` setting - Stephen McDonald
+  * Fix: Add missing space - cspollar
+  * Fix file name decoding from zip files in python 3. In python3, non-ascii filenames in galleries are incorrectly decoded,. interpreting utf8 code points as box-drawing characters. For example, in. the demo project "Ávila Spain" is incorrectly parsed as "A╠üvila Spain". CP437 is a superset of ascii and the de facto standard for file names. Obviously not every valid utf-8 character is in this character set, but. a lot of tooling does not support file names with characters outside. this set anyway. If we were to encode them in a broader character set I. suspect we would get into OS-interoperability issues, so better to. forego encoding them and coerce them into valid file names. Note that this changes the behavior such that in python3, file names are. now decoded with a chardet-detected encoding. It's also notable that the latest release of chardet incorrectly. identifies the encoding, so in the demo galleries, "Ávila Spain" is. incorrectly parsed as "AĚvila Spain". This is fixed in chardet master - ryneeverett
+  * ``base_concrete_model:`` accept model class argument. Previously only model instances were accepted but now model classes can. be passed alternatively - ryneeverett
+  * Factor custom content types out of Page. Custom content types are now implemented as Model and ModelAdmin mixins. This way they can be reused by Cartridge's Product model - ryneeverett
+  * Add ``content_typed/change_list.html`` include. This eliminates template duplication for the content type selector in. cartridge. Note that all jQuery events are propagated unless one of them returns. `false`, so both of our `addlist` change handlers get called. ``http://stackoverflow.com/questions/4379403/jquery-event-handlers-return-values`` - ryneeverett
+  * Append default ``TEMPLATE_ACCESSIBLE_SETTINGS``. This means users don't have to copy the defaults into their settings and. are protected from future changes to the settings used by internal. mezzanine templates - ryneeverett
+  * Warn when unallowed template settings are used. Since the exception is suppressed, give a hint that the template. setting isn't allowed - ryneeverett
+  * dynamically set current rating if it exists - Martín Gaitán
+  * Remove redundant slash in urlpatterns when homepage is the blog - Stephen McDonald
+  * Django 1.10 removed ``LOGOUT_URL``, so provide a default - Stephen McDonald
+  * Replace Django's deprecated ``AUTH_PROFILE_MODULE`` setting with new ``ACCOUNTS_PROFILE_MODEL`` setting - Stephen McDonald
+  * Remove use of NoArgsCommand, which Django 1.10 removes - Stephen McDonald
+  * Remove ``content_typed`` namespace. - ``content_typed.py`` -> ``models.py`` + ``admin.py``. - ``content_typed/change_list.html`` ->. ``admin/includes/content_typed_change_list.html`` - ryneeverett
+  * Restore guards against back button in page tree / content typed JS - Stephen McDonald
+  * Fix encoding in blog feeds. Closes #1461 - Stephen McDonald
+  * Add form media to Form pages. My use case is adding form assets to a widget used by a field included. in the ``FORMS_EXTRA_FIELDS`` setting. I don't think one should have to. override this template to do this and overextension doesn't seem to work. on content-typed templates - ryneeverett
+  * Fail gracefully on third-party admin classes that do odd things. Closes #1628 - Stephen McDonald
+  * Prevent bleach from stripping 'tel:' hrefs in HTML - Stephen McDonald
+  * Fix #1438 -- allow multiple comment forms on a page - Alex Hill
+  * Use ``call_command`` instead calling ``Command.execute()`` directly - Alex Hill
+  * Fix search by hacking around Django's abstract manager restriction - Alex Hill
+  * Allow Django 1.10 in ``setup.py`` - Alex Hill
+  * Pass raw context dict to ``template.render()`` in error views - Alex Hill
+  * Remove testing of dotted path for ``LOGIN_URL`` setting, since Django 1.10 doesn't support it - Stephen McDonald
+  * Prevent Django 1.10 from adding required attribute to admin change list actions dropdown - Stephen McDonald
+  * Replace usage of optparse with argparse - Alex Hill
+  * Ensure blog import commands contain base args - Stephen McDonald
+  * Add Django ``stable/1.10.x`` to test matrix - Alex Hill
+  * Upgrade pip and setuptools before test run - Alex Hill
+  * Restore access to parent template context in comments template tag. Closes #1654 - Stephen McDonald
+
 Version 4.1.0 (Jan 17, 2016)
 ----------------------------
 

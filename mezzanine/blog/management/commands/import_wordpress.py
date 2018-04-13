@@ -3,7 +3,6 @@ from future.builtins import int
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-from optparse import make_option
 import re
 from time import mktime, timezone
 from xml.dom.minidom import parse
@@ -21,9 +20,10 @@ class Command(BaseImporterCommand):
     Wordpress Extended RSS file.
     """
 
-    option_list = BaseImporterCommand.option_list + (
-        make_option("-u", "--url", dest="url", help="URL to import file"),
-    )
+    def add_arguments(self, parser):
+        super(Command, self).add_arguments(parser)
+        parser.add_argument(
+            "-u", "--url", dest="url", help="URL to import file")
 
     def get_text(self, xml, name):
         """
@@ -76,7 +76,7 @@ class Command(BaseImporterCommand):
                 post = self.add_post(title=entry.title, content=content,
                                      pub_date=pub_date, tags=terms["tag"],
                                      categories=terms["category"],
-                                     old_url=entry.id)
+                                     old_url=entry.get('link', entry.id))
 
                 # Get the comments from the xml doc.
                 for c in xmlitem.getElementsByTagName("wp:comment"):

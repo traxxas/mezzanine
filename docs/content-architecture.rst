@@ -223,35 +223,6 @@ For example, if an additional author were added as a child page of
 the template ``pages/authors/dr-seuss/author.html`` would be among
 those checked.
 
-Overriding vs Extending Templates
-=================================
-
-A typical problem that reusable Django apps face, is being able to
-extend the app's templates rather than overriding them. The app will
-usually provide templates that the app will look for by name, which
-allows the developer to create their own versions of the templates in
-their project's templates directory. However if the template is
-sufficiently complex, with a good range of extendable template blocks,
-they need to duplicate all of the features of the template within
-their own version. This may cause the project's version of the
-templates to become incompatible as new versions of the upstream app
-become available.
-
-Ideally we would be able to use Django's ``extends`` tag to extend the
-app's template instead, and only override the template blocks we're
-interested in. The problem with this however, is that the app will
-attempt to load the template with a specific name, so we can't override
-*and* extend a template at the same time, as circular inheritance will
-occur, e.g. Django thinks the template is trying to extend itself, which
-is impossible.
-
-To solve this problem, Mezzanine provides the :func:`.overextends`
-template tag, which allows you to extend a template with the same name.
-The :func:`.overextends`  tag works the same way as Django's ``extends`` tag,
-(in fact it subclasses it), so it must be the first tag in the template.
-What it does differently is that the template using it will be excluded
-from loading when Django searches for the template to extend from.
-
 Page Processors
 ===============
 
@@ -269,12 +240,12 @@ custom :class:`.Page` models and are then called inside the
 :class:`.Page` instance. A Page Processor will always be passed two arguments
 - the request and the :class:`.Page` instance, and can either return a
 dictionary that will be added to the template context, or it can return
-any of Django's ``HttpResponse`` classes which will override the
+any of Django's :class:`~django.http.HttpResponse` classes which will override the
 :func:`mezzanine.pages.views.page` view entirely.
 
 To associate a Page Processor to a custom :class:`.Page` model you must
 create the function for it in a module called :mod:`.page_processors.py`
-inside one of your ``INSTALLED_APPS`` and decorate it using the
+inside one of your :django:setting:`INSTALLED_APPS` and decorate it using the
 decorator :func:`mezzanine.pages.page_processors.processor_for`.
 
 Continuing on from our author example, suppose we want to add an
@@ -570,4 +541,4 @@ as active in the navigation, and to generate breadcrumbs for the
 ``page`` instance as well.
 
 An example of this setup is Mezzanine's blog application, which does not
-use ``Page`` content types, and is just a regular Django app.
+use :class:`.Page` content types, and is just a regular Django app.

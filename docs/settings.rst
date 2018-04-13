@@ -54,6 +54,15 @@ List of fields to exclude from the profile form.
 
 Default: ``()``
 
+.. _ACCOUNTS_PROFILE_MODEL:
+
+``ACCOUNTS_PROFILE_MODEL``
+--------------------------
+
+String in the form `app_label.model_name` for the model used for account profiles.
+
+Default: ``None``
+
 .. _ACCOUNTS_PROFILE_VIEWS_ENABLED:
 
 ``ACCOUNTS_PROFILE_VIEWS_ENABLED``
@@ -104,7 +113,7 @@ Default: ``(('Content', ('pages.Page', 'blog.BlogPost', 'generic.ThreadedComment
 ``ADMIN_REMOVAL``
 -----------------
 
-Unregister these models from the admin.
+A sequence of Python dotted paths to models (eg: ``['mezzanine.blog.models.BlogPost',]``) that should be removed from the admin.
 
 Default: ``()``
 
@@ -305,24 +314,6 @@ Default: ``'mezzanine.generic.forms.ThreadedCommentForm'``
 A three item sequence, each containing a sequence of template tags used to render the admin dashboard.
 
 Default: ``(('blog_tags.quick_blog', 'mezzanine_tags.app_list'), ('comment_tags.recent_comments',), ('mezzanine_tags.recent_actions',))``
-
-.. _DEVICE_DEFAULT:
-
-``DEVICE_DEFAULT``
-------------------
-
-Device specific template sub-directory to use as the default device.
-
-Default: ``''``
-
-.. _DEVICE_USER_AGENTS:
-
-``DEVICE_USER_AGENTS``
-----------------------
-
-Mapping of device specific template sub-directory names to the sequence of strings that may be found in their user agents.
-
-Default: ``(('mobile', ('2.0 MMP', '240x320', '400X240', 'AvantGo', 'BlackBerry', 'Blazer', 'Cellphone', 'Danger', 'DoCoMo', 'Elaine/3.0', 'EudoraWeb', 'Googlebot-Mobile', 'hiptop', 'IEMobile', 'KYOCERA/WX310K', 'LG/U990', 'MIDP-2.', 'MMEF20', 'MOT-V', 'NetFront', 'Newt', 'Nintendo Wii', 'Nitro', 'Nokia', 'Opera Mini', 'Palm', 'PlayStation Portable', 'portalmmm', 'Proxinet', 'ProxiNet', 'SHARP-TQ-GX10', 'SHG-i900', 'Small', 'SonyEricsson', 'Symbian OS', 'SymbianOS', 'TS21i-10', 'UP.Browser', 'UP.Link', 'webOS', 'Windows CE', 'WinWAP', 'YahooSeeker/M1A1-R2D2', 'iPhone', 'iPod', 'Android', 'BlackBerry9530', 'LG-TU915 Obigo', 'LGE VX', 'webOS', 'Nokia5800')),)``
 
 .. _EMAIL_FAIL_SILENTLY:
 
@@ -612,6 +603,15 @@ Number of results shown in the search results page.
 
 Default: ``10``
 
+.. _SEARCH_AGE_SCALE_FACTOR:
+
+``SEARCH_AGE_SCALE_FACTOR``
+---------------------------
+
+The amount of emphasis to put on age when ranking search results. A higher number gives more emphasis to age, ranking newer results higher with less regard to their ordinary score. Setting this to zero disables weighing search results by age.
+
+Default: ``1.5``
+
 .. _SITE_PREFIX:
 
 ``SITE_PREFIX``
@@ -788,7 +788,7 @@ Default: ``3``
 ``TWITTER_DEFAULT_QUERY``
 -------------------------
 
-Twitter query to use for the default query type. 
+Twitter query to use for the default query type.
 
 *Note:* Once you change this from the default, you'll need to configure each of the oAuth consumer/access key/secret settings. Please refer to `http://dev.twitter.com <http://dev.twitter.com>`_ for more information on creating an application and acquiring these settings.
 

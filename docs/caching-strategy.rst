@@ -30,11 +30,11 @@ cache>`_, and behaves in a similar way.
 
 Pages are fetched from cache by
 :class:`mezzanine.core.middleware.FetchFromCacheMiddleware`, which should
-appear at the end of the ``MIDDLEWARE_CLASSES`` setting and therefore
+appear at the end of the :django:setting:`MIDDLEWARE_CLASSES` setting and therefore
 be activated at the end of the request phase. If a cache miss occurs,
 the request is marked as requiring a cache update, which is handled by
 :class:`mezzanine.core.middleware.UpdateCacheMiddleware`, which in turn
-should appear at the start of ``MIDDLEWARE_CLASSES`` and therefore
+should appear at the start of :django:setting:`MIDDLEWARE_CLASSES` and therefore
 be activated at the end of the response phase.
 
 Mezzanine's cache middleware differs from its Django counterpart in
@@ -42,8 +42,7 @@ a few subtle yet significant ways:
 
   * Setting ``CACHE_ANONYMOUS_ONLY`` to ``False`` will have no effect,
     so authenticated users will never use the cache system.
-  * Cache keys include the ID for the current Django ``Site`` object,
-    and device (see :doc:`device-handling`).
+  * Cache keys include the ID for the current Django ``Site`` object.
   * Cache keys do not take Vary headers into account, so all
     unauthenticated visitors will receive the same page content per
     URL.
