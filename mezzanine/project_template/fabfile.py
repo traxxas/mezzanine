@@ -95,7 +95,7 @@ templates = {
     "nginx": {
         "local_path": "deploy/nginx.conf.template",
         "remote_path": "/etc/nginx/sites-enabled/%(proj_name)s.conf",
-        "reload_command": "service nginx restart",
+        "reload_command": "nginx -t && service nginx restart",
     },
     "supervisor": {
         "local_path": "deploy/supervisor.conf.template",
@@ -444,6 +444,7 @@ def install():
     sudo("apt-get update -y -q")
     apt("nginx libjpeg-dev python-dev python-setuptools git-core "
         "postgresql libpq-dev memcached supervisor python-pip")
+    apt('gcc rsync')
     run("mkdir -p /home/%s/logs" % env.user)
 
     # Install Python requirements

@@ -15,6 +15,8 @@ except ImportError:  # Python 2
 
 import re
 
+from mezzanine.utils.deprecation import mark_safe
+
 
 SELF_CLOSING_TAGS = ['br', 'img']
 NON_SELF_CLOSING_TAGS = ['script', 'iframe']
@@ -77,6 +79,7 @@ def decode_entities(html):
     return re.sub("&#?\w+;", decode, html.replace("&amp;", "&"))
 
 
+@mark_safe
 def escape(html):
     """
     Escapes HTML according to the rules defined by the settings
@@ -101,6 +104,7 @@ def escape(html):
                  protocols=ALLOWED_PROTOCOLS + ["tel"])
 
 
+@mark_safe
 def thumbnails(html):
     """
     Given a HTML string, converts paths in img tags to thumbnail
@@ -122,7 +126,7 @@ def thumbnails(html):
         src_in_media = src.lower().startswith(settings.MEDIA_URL.lower())
         width = img.get("width")
         height = img.get("height")
-        if src_in_media and width and height:
+        if src_in_media and str(width).isdigit() and str(height).isdigit():
             img["src"] = settings.MEDIA_URL + thumbnail(src, width, height)
     # BS adds closing br tags, which the browser interprets as br tags.
     return str(dom).replace("</br>", "")
